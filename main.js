@@ -220,6 +220,7 @@ allOEMs(cellsMap) {
   }
 
 }
+module.exports = Cell;
 
 function parseCSVData(csvData, callback) {
   parse(
