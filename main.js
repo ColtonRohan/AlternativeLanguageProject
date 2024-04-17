@@ -1,8 +1,26 @@
+//!!WARNING!! - If you are grading only the main.js using REPLIT make sure that the imports are commented out and the 
+// class is defined as 'class Cell' not 'export class Cell' with 
+// module.exports = Cell uncommented on line 317 
+
+// if you are running the project from a local copy pulled from github with the package.json included uncomment the imports and comment out the requires
+// change the 'class Cell' to 'export class Cell' 
+// make sure and comment out module.exports = Cell on line 317 
+
+
+// This is purly for testing purposes 
+
 const fs = require("fs");
 const path = require("path");
 const parse = require("csv-parse").parse;
 const readline = require("readline");
 
+// import fs from 'fs'
+// import path from 'path'
+// import {parse} from 'csv-parse'
+// import readline from 'readline'
+
+
+// export class Cell {
 class Cell {
   constructor() {
     this._oem = null;
@@ -92,7 +110,7 @@ class Cell {
     this._features_sensors = value || null;
   }
   setPlatformOs(value) {
-    const osRegex = /^[^,]+/; 
+    const osRegex = /^[^,]+/;
     const match = osRegex.exec(value);
     this._platform_os = match ? match[0] : null;
   }
@@ -119,20 +137,20 @@ class Cell {
     let maxCount = 0;
 
     cellsMap.forEach((cell) => {
-        const oem = cell.getOem();
-        if (oem) {
-            oemCounts[oem] = (oemCounts[oem] || 0) + 1;
-            if (oemCounts[oem] > maxCount) {
-                maxCount = oemCounts[oem];
-                mostCommonOEM = oem;
-            }
+      const oem = cell.getOem();
+      if (oem) {
+        oemCounts[oem] = (oemCounts[oem] || 0) + 1;
+        if (oemCounts[oem] > maxCount) {
+          maxCount = oemCounts[oem];
+          mostCommonOEM = oem;
         }
+      }
     });
 
     return mostCommonOEM;
-}
+  }
 
-allOEMs(cellsMap) {
+  allOEMs(cellsMap) {
     const oemCounts = {};
     cellsMap.forEach((cell) => {
       const oem = cell.getOem();
@@ -175,7 +193,9 @@ allOEMs(cellsMap) {
       }
     });
 
-    const sortedPlatforms = Object.keys(platformCounts).sort((a, b) => platformCounts[b] - platformCounts[a]);
+    const sortedPlatforms = Object.keys(platformCounts).sort(
+      (a, b) => platformCounts[b] - platformCounts[a],
+    );
 
     console.log("Platform OS and their totals:");
     sortedPlatforms.forEach((platform) => {
@@ -219,7 +239,89 @@ allOEMs(cellsMap) {
     return count;
   }
 
+  static findCompanyWithHighestAverageWeight(cellsMap) {
+    const oemWeights = {};
+
+    cellsMap.forEach((cell) => {
+      const oem = cell.getOem();
+      const weight = parseFloat(cell.getBodyWeight());
+      if (!isNaN(weight)) {
+        if (oem in oemWeights) {
+          oemWeights[oem].totalWeight += weight;
+          oemWeights[oem].count++;
+        } else {
+          oemWeights[oem] = { totalWeight: weight, count: 1 };
+        }
+      }
+    });
+
+    let highestAverageWeight = 0;
+    let highestAverageOem = null;
+
+    for (const oem in oemWeights) {
+      const averageWeight = oemWeights[oem].totalWeight / oemWeights[oem].count;
+      if (averageWeight > highestAverageWeight) {
+        highestAverageWeight = averageWeight;
+        highestAverageOem = oem;
+      }
+    }
+
+    return { highestAverageOem, highestAverageWeight };
+  }
+
+  listAnnouncedReleasedDifferentYears(cellsMap) {
+    const phones = [];
+    cellsMap.forEach((cell) => {
+      const announcedYear = parseInt(cell.getLaunchAnnounced());
+      const releasedYear = parseInt(cell.getLaunchStatus());
+      if (
+        !isNaN(announcedYear) &&
+        !isNaN(releasedYear) &&
+        announcedYear !== releasedYear
+      ) {
+        phones.push({ oem: cell.getOem(), model: cell.getModel() });
+      }
+    });
+    return phones;
+  }
+
+  static countPhonesWithOneSensor(cellsMap) {
+    let count = 0;
+    cellsMap.forEach((cell) => {
+      const sensors = cell.getFeaturesSensors();
+      if (sensors && sensors.split(",").length === 1) {
+        count++;
+      }
+    });
+    return count;
+  }
+
+  static findYearWithMostPhonesLaunched(cellsMap) {
+    const yearCounts = {};
+    cellsMap.forEach((cell) => {
+      const launchYear = parseInt(cell.getLaunchAnnounced());
+      if (!isNaN(launchYear) && launchYear > 1999) {
+        if (yearCounts[launchYear]) {
+          yearCounts[launchYear]++;
+        } else {
+          yearCounts[launchYear] = 1;
+        }
+      }
+    });
+
+    let maxYear = null;
+    let maxCount = 0;
+    for (const year in yearCounts) {
+      if (yearCounts[year] > maxCount) {
+        maxCount = yearCounts[year];
+        maxYear = year;
+      }
+    }
+
+    return maxYear;
+  }
 }
+
 module.exports = Cell;
 
 function parseCSVData(csvData, callback) {
@@ -294,7 +396,7 @@ function parseCSVData(csvData, callback) {
 }
 
 function loadAndProcessCSV(callback) {
-  const filePath = path.join(__dirname, "cells.csv");
+  const filePath = "cells.csv";
   fs.readFile(filePath, "utf8", (error, csvData) => {
     if (error) {
       console.error("Error reading the CSV file:", error);
@@ -307,101 +409,165 @@ function loadAndProcessCSV(callback) {
 
 // functions to call the Cell methods within the console display
 function displayCellDetails(cellsMap) {
-    cellsMap.forEach((cell, key) => {
-      console.log(cell.toString()); 
-    });
-  }
-  
-  function displayMostCommonOEM(cellsMap) {
-      const cell = new Cell();
-      const mostCommonOEM = cell.mostCommonOEM(cellsMap);
-      console.log("Most Common OEM:", mostCommonOEM);
-  }
-  
-  function displayAllOEMs(cellsMap) {
-      const cell = new Cell();
-      const totalCount = cell.allOEMs(cellsMap);
-    
-      console.log("Total count of all specific OEMs:", totalCount);
-  }
+  cellsMap.forEach((cell, key) => {
+    console.log(cell.toString());
+  });
+}
 
-  function displayAverageWeight(cellsMap) {
-    const cell = new Cell();
-    const averageWeight = cell.averageWeight(cellsMap);
-    if (averageWeight !== null) {
-      console.log("Average Weight:", averageWeight.toFixed(2), "g");
+function displayMostCommonOEM(cellsMap) {
+  const cell = new Cell();
+  const mostCommonOEM = cell.mostCommonOEM(cellsMap);
+  console.log("Most Common OEM:", mostCommonOEM);
+}
+
+function displayAllOEMs(cellsMap) {
+  const cell = new Cell();
+  const totalCount = cell.allOEMs(cellsMap);
+
+  console.log("Total count of all specific OEMs:", totalCount);
+}
+
+function displayAverageWeight(cellsMap) {
+  const cell = new Cell();
+  const averageWeight = cell.averageWeight(cellsMap);
+  if (averageWeight !== null) {
+    console.log("Average Weight:", averageWeight.toFixed(2), "g");
+  }
+}
+
+function displayPlatformOs(cellsMap) {
+  const cell = new Cell();
+  cell.listPlatformOs(cellsMap);
+}
+
+function displayDisplaySize(cellsMap) {
+  const cell = new Cell();
+  const { largestDisplaySize, smallestDisplaySize } =
+    cell.findMinMaxDisplaySize(cellsMap);
+  console.log(
+    "Largest Display Size:",
+    `${largestDisplaySize.size} inches - Model Name: ${largestDisplaySize.model}`,
+  );
+  console.log(
+    "Smallest Display Size:",
+    `${smallestDisplaySize.size} inches - Model Name: ${smallestDisplaySize.model}`,
+  );
+}
+
+function displayDiscontinuedOrCancelled(cellsMap) {
+  const cell = new Cell();
+  const count = cell.countDiscontinuedOrCancelled(cellsMap);
+  console.log("Count of Discontinued or Cancelled:", count);
+}
+
+function displayHighestAverageWeight(cellsMap) {
+  const { highestAverageOem, highestAverageWeight } =
+    Cell.findCompanyWithHighestAverageWeight(cellsMap);
+  console.log(
+    `Company with highest average weight: ${highestAverageOem} (${highestAverageWeight.toFixed(2)} g)`,
+  );
+}
+
+function displayAnnouncedReleasedDifferentYears(cellsMap) {
+  const cell = new Cell();
+  const phones = cell.listAnnouncedReleasedDifferentYears(cellsMap);
+  if (phones.length > 0) {
+    console.log("Phones announced in one year and released in another:");
+    phones.forEach((phone) => {
+      console.log(`OEM: ${phone.oem}, Model: ${phone.model}`);
+    });
+  } else {
+    console.log(
+      "No phones were announced in one year and released in another.",
+    );
+  }
+}
+
+function displayPhonesWithOneSensorCount(cellsMap) {
+  const count = Cell.countPhonesWithOneSensor(cellsMap);
+  console.log(`Number of phones with only one feature sensor: ${count}`);
+}
+
+function displayYearWithMostPhonesLaunched(cellsMap) {
+  const year = Cell.findYearWithMostPhonesLaunched(cellsMap);
+  if (year !== null) {
+    console.log(`Year with the most phones launched (after 1999): ${year}`);
+  } else {
+    console.log("No phones were launched after 1999.");
+  }
+}
+
+// console display
+function startCLI() {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
+  console.log("Welcome to Cell Details CSV Reader!");
+  console.log("1. Display cell details");
+  console.log("2. Most common OEM");
+  console.log("3. List all OEMs and their totals");
+  console.log("4. Display average weight of phones");
+  console.log("5. List all platform totals in order");
+  console.log("6. Display largest and smallest display size");
+  console.log("7. Display Discontinued/Cancelled launches");
+  console.log(
+    "8. What company (oem) has the highest average weight of the phone body?",
+  );
+  console.log("9. List phones announced in one year and released in another");
+  console.log("10. How many phones have only one feature sensor?");
+  console.log(
+    "11. What year had the most phones launched in any year later than 1999?",
+  );
+  console.log("12. Exit");
+
+  rl.question("Select an option (1-12): ", (answer) => {
+    switch (answer) {
+      case "1":
+        loadAndProcessCSV(displayCellDetails);
+        break;
+      case "2":
+        loadAndProcessCSV(displayMostCommonOEM);
+        break;
+      case "3":
+        loadAndProcessCSV(displayAllOEMs);
+        break;
+      case "4":
+        loadAndProcessCSV(displayAverageWeight);
+        break;
+      case "5":
+        loadAndProcessCSV(displayPlatformOs);
+        break;
+      case "6":
+        loadAndProcessCSV(displayDisplaySize);
+        break;
+      case "7":
+        loadAndProcessCSV(displayDiscontinuedOrCancelled);
+        break;
+      case "8":
+        loadAndProcessCSV(displayHighestAverageWeight);
+        break;
+      case "9":
+        loadAndProcessCSV(displayAnnouncedReleasedDifferentYears);
+        break;
+      case "10":
+        loadAndProcessCSV(displayPhonesWithOneSensorCount);
+        break;
+      case "11":
+        loadAndProcessCSV(displayYearWithMostPhonesLaunched);
+        break;
+      case "12":
+        console.log("Exiting...");
+        rl.close();
+        break;
+      default:
+        console.log("Invalid option. Please select a number from 1 to 7.");
+        startCLI();
+        break;
     }
-  }
-
-  function displayPlatformOs(cellsMap) {
-    const cell = new Cell();
-    cell.listPlatformOs(cellsMap);
-  }
-
-  function displayDisplaySize(cellsMap) {
-    const cell = new Cell();
-    const { largestDisplaySize, smallestDisplaySize } = cell.findMinMaxDisplaySize(cellsMap);
-    console.log("Largest Display Size:", `${largestDisplaySize.size} inches - Model Name: ${largestDisplaySize.model}`);
-    console.log("Smallest Display Size:", `${smallestDisplaySize.size} inches - Model Name: ${smallestDisplaySize.model}`);
-  }
-
-  function displayDiscontinuedOrCancelled(cellsMap) {
-    const cell = new Cell();
-    const count = cell.countDiscontinuedOrCancelled(cellsMap);
-    console.log("Count of Discontinued or Cancelled:", count);
-  }
-  
-  // console display
-  function startCLI() {
-    const rl = readline.createInterface({
-      input: process.stdin,
-      output: process.stdout,
-    });
-  
-    console.log("Welcome to Cell Details CSV Reader!");
-    console.log("1. Display cell details");
-    console.log("2. Most common OEM");
-    console.log("3. List all OEMs and their totals");
-    console.log("4. Display average weight of phones");
-    console.log("5. List all platform totals in order");
-    console.log("6. Display largest and smallest display size");
-    console.log("7. Display Discontinued/Cancelled launches");
-    console.log("8. Exit");
-  
-    rl.question("Select an option (1-7): ", (answer) => {
-      switch (answer) {
-        case "1":
-          loadAndProcessCSV(displayCellDetails);
-          break;
-        case "2":
-          loadAndProcessCSV(displayMostCommonOEM);
-          break;
-        case "3":
-          loadAndProcessCSV(displayAllOEMs);
-          break;
-        case "4":
-          loadAndProcessCSV(displayAverageWeight);
-          break;
-        case "5":
-          loadAndProcessCSV(displayPlatformOs);
-          break;
-        case "6":
-          loadAndProcessCSV(displayDisplaySize);
-          break;
-        case "7":
-          loadAndProcessCSV(displayDiscontinuedOrCancelled);
-          break;
-        case "8":
-          console.log("Exiting...");
-          rl.close();
-          break;
-        default:
-          console.log("Invalid option. Please select a number from 1 to 7.");
-          startCLI(); 
-          break;
-      }
-    });
-  }
+  });
+}
 
 // begin the program with console display
 startCLI();
