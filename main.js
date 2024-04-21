@@ -7,13 +7,13 @@
 // make sure and comment out module.exports = Cell on line 317 
 
 
-// This is purly for testing purposes 
 
 const fs = require("fs");
 const path = require("path");
 const parse = require("csv-parse").parse;
 const readline = require("readline");
 
+// This is purly for testing purposes after pulling the repo
 // import fs from 'fs'
 // import path from 'path'
 // import {parse} from 'csv-parse'
@@ -132,32 +132,41 @@ class Cell {
   }
 
   mostCommonOEM(cellsMap) {
-    const oemCounts = {};
-    let mostCommonOEM = null;
-    let maxCount = 0;
+    try {
+      const oemCounts = {};
+      let mostCommonOEM = null;
+      let maxCount = 0;
 
-    cellsMap.forEach((cell) => {
-      const oem = cell.getOem();
-      if (oem) {
-        oemCounts[oem] = (oemCounts[oem] || 0) + 1;
-        if (oemCounts[oem] > maxCount) {
-          maxCount = oemCounts[oem];
-          mostCommonOEM = oem;
+      cellsMap.forEach((cell) => {
+        const oem = cell.getOem();
+        if (oem) {
+          oemCounts[oem] = (oemCounts[oem] || 0) + 1;
+          if (oemCounts[oem] > maxCount) {
+            maxCount = oemCounts[oem];
+            mostCommonOEM = oem;
+          }
         }
-      }
-    });
+      });
 
-    return mostCommonOEM;
+      return mostCommonOEM;
+    } catch (error) {
+      console.error("Error in mostCommonOEM:", error);
+      return null;
+    }
   }
 
   allOEMs(cellsMap) {
     const oemCounts = {};
-    cellsMap.forEach((cell) => {
-      const oem = cell.getOem();
-      if (oem) {
-        oemCounts[oem] = (oemCounts[oem] || 0) + 1;
-      }
-    });
+    try {
+      cellsMap.forEach((cell) => {
+        const oem = cell.getOem();
+        if (oem) {
+          oemCounts[oem] = (oemCounts[oem] || 0) + 1;
+        }
+      });
+    } catch (error) {
+      console.error("Error in allOEMs:", error);
+    }
     return oemCounts;
   }
 
@@ -165,20 +174,24 @@ class Cell {
     let totalWeight = 0;
     let count = 0;
 
-    cellsMap.forEach((cell) => {
-      const weight = cell.getBodyWeight();
-      if (weight) {
-        const numericWeight = parseFloat(weight);
-        if (!isNaN(numericWeight)) {
-          totalWeight += numericWeight;
-          count++;
+    try {
+      cellsMap.forEach((cell) => {
+        const weight = cell.getBodyWeight();
+        if (weight) {
+          const numericWeight = parseFloat(weight);
+          if (!isNaN(numericWeight)) {
+            totalWeight += numericWeight;
+            count++;
+          }
         }
-      }
-    });
+      });
 
-    if (count === 0) {
-      console.log("No valid body weight found.");
-      return null;
+      if (count === 0) {
+        console.log("No valid body weight found.");
+        return null;
+      }
+    } catch (error) {
+      console.error("Error in averageWeight:", error);
     }
 
     return totalWeight / count;
@@ -186,42 +199,50 @@ class Cell {
 
   listPlatformOs(cellsMap) {
     const platformCounts = {};
-    cellsMap.forEach((cell) => {
-      const platform = cell.getPlatformOs();
-      if (platform) {
-        platformCounts[platform] = (platformCounts[platform] || 0) + 1;
-      }
-    });
+    try {
+      cellsMap.forEach((cell) => {
+        const platform = cell.getPlatformOs();
+        if (platform) {
+          platformCounts[platform] = (platformCounts[platform] || 0) + 1;
+        }
+      });
 
-    const sortedPlatforms = Object.keys(platformCounts).sort(
-      (a, b) => platformCounts[b] - platformCounts[a],
-    );
+      const sortedPlatforms = Object.keys(platformCounts).sort(
+        (a, b) => platformCounts[b] - platformCounts[a],
+      );
 
-    console.log("Platform OS and their totals:");
-    sortedPlatforms.forEach((platform) => {
-      console.log(`${platform}: ${platformCounts[platform]}`);
-    });
+      console.log("Platform OS and their totals:");
+      sortedPlatforms.forEach((platform) => {
+        console.log(`${platform}: ${platformCounts[platform]}`);
+      });
+    } catch (error) {
+      console.error("Error in listPlatformOs:", error);
+    }
   }
 
   findMinMaxDisplaySize(cellsMap) {
     let largestDisplaySize = { size: 0, model: null };
     let smallestDisplaySize = { size: Infinity, model: null };
 
-    cellsMap.forEach((cell) => {
-      const displaySize = cell.getDisplaySize();
-      const model = cell.getModel();
-      if (displaySize) {
-        const size = parseFloat(displaySize);
-        if (!isNaN(size)) {
-          if (size > largestDisplaySize.size) {
-            largestDisplaySize = { size, model };
-          }
-          if (size < smallestDisplaySize.size) {
-            smallestDisplaySize = { size, model };
+    try {
+      cellsMap.forEach((cell) => {
+        const displaySize = cell.getDisplaySize();
+        const model = cell.getModel();
+        if (displaySize) {
+          const size = parseFloat(displaySize);
+          if (!isNaN(size)) {
+            if (size > largestDisplaySize.size) {
+              largestDisplaySize = { size, model };
+            }
+            if (size < smallestDisplaySize.size) {
+              smallestDisplaySize = { size, model };
+            }
           }
         }
-      }
-    });
+      });
+    } catch (error) {
+      console.error("Error in findMinMaxDisplaySize:", error);
+    }
 
     return { largestDisplaySize, smallestDisplaySize };
   }
@@ -229,96 +250,120 @@ class Cell {
   countDiscontinuedOrCancelled(cellsMap) {
     let count = 0;
 
-    cellsMap.forEach((cell) => {
-      const status = cell.getLaunchStatus();
-      if (status === "Discontinued" || status === "Cancelled") {
-        count++;
-      }
-    });
+    try {
+      cellsMap.forEach((cell) => {
+        const status = cell.getLaunchStatus();
+        if (status === "Discontinued" || status === "Cancelled") {
+          count++;
+        }
+      });
+    } catch (error) {
+      console.error("Error in countDiscontinuedOrCancelled:", error);
+    }
 
     return count;
   }
 
   static findCompanyWithHighestAverageWeight(cellsMap) {
-    const oemWeights = {};
+    try {
+      const oemWeights = {};
 
-    cellsMap.forEach((cell) => {
-      const oem = cell.getOem();
-      const weight = parseFloat(cell.getBodyWeight());
-      if (!isNaN(weight)) {
-        if (oem in oemWeights) {
-          oemWeights[oem].totalWeight += weight;
-          oemWeights[oem].count++;
-        } else {
-          oemWeights[oem] = { totalWeight: weight, count: 1 };
+      cellsMap.forEach((cell) => {
+        const oem = cell.getOem();
+        const weight = parseFloat(cell.getBodyWeight());
+        if (!isNaN(weight)) {
+          if (oem in oemWeights) {
+            oemWeights[oem].totalWeight += weight;
+            oemWeights[oem].count++;
+          } else {
+            oemWeights[oem] = { totalWeight: weight, count: 1 };
+          }
+        }
+      });
+
+      let highestAverageWeight = 0;
+      let highestAverageOem = null;
+
+      for (const oem in oemWeights) {
+        const averageWeight = oemWeights[oem].totalWeight / oemWeights[oem].count;
+        if (averageWeight > highestAverageWeight) {
+          highestAverageWeight = averageWeight;
+          highestAverageOem = oem;
         }
       }
-    });
 
-    let highestAverageWeight = 0;
-    let highestAverageOem = null;
-
-    for (const oem in oemWeights) {
-      const averageWeight = oemWeights[oem].totalWeight / oemWeights[oem].count;
-      if (averageWeight > highestAverageWeight) {
-        highestAverageWeight = averageWeight;
-        highestAverageOem = oem;
-      }
+      return { highestAverageOem, highestAverageWeight };
+    } catch (error) {
+      console.error("Error in findCompanyWithHighestAverageWeight:", error);
+      return { highestAverageOem: null, highestAverageWeight: 0 };
     }
-
-    return { highestAverageOem, highestAverageWeight };
   }
 
   listAnnouncedReleasedDifferentYears(cellsMap) {
-    const phones = [];
-    cellsMap.forEach((cell) => {
-      const announcedYear = parseInt(cell.getLaunchAnnounced());
-      const releasedYear = parseInt(cell.getLaunchStatus());
-      if (
-        !isNaN(announcedYear) &&
-        !isNaN(releasedYear) &&
-        announcedYear !== releasedYear
-      ) {
-        phones.push({ oem: cell.getOem(), model: cell.getModel() });
-      }
-    });
-    return phones;
+    try {
+      const phones = [];
+      cellsMap.forEach((cell) => {
+        const announcedYear = parseInt(cell.getLaunchAnnounced());
+        const releasedYear = parseInt(cell.getLaunchStatus());
+        if (
+          !isNaN(announcedYear) &&
+          !isNaN(releasedYear) &&
+          announcedYear !== releasedYear
+        ) {
+          phones.push({ oem: cell.getOem(), model: cell.getModel() });
+        }
+      });
+      return phones;
+    } catch (error) {
+      console.error("Error in listAnnouncedReleasedDifferentYears:", error);
+      return [];
+    }
   }
 
   static countPhonesWithOneSensor(cellsMap) {
-    let count = 0;
-    cellsMap.forEach((cell) => {
-      const sensors = cell.getFeaturesSensors();
-      if (sensors && sensors.split(",").length === 1) {
-        count++;
-      }
-    });
-    return count;
+    try {
+      let count = 0;
+      cellsMap.forEach((cell) => {
+        const sensors = cell.getFeaturesSensors();
+        if (sensors && sensors.split(",").length === 1) {
+          count++;
+        }
+      });
+      return count;
+    } catch (error) {
+      console.error("Error in countPhonesWithOneSensor:", error);
+      return 0;
+    }
   }
 
   static findYearWithMostPhonesLaunched(cellsMap) {
-    const yearCounts = {};
-    cellsMap.forEach((cell) => {
-      const launchYear = parseInt(cell.getLaunchAnnounced());
-      if (!isNaN(launchYear) && launchYear > 1999) {
-        if (yearCounts[launchYear]) {
-          yearCounts[launchYear]++;
-        } else {
-          yearCounts[launchYear] = 1;
+    try {
+      const yearCounts = {};
+      cellsMap.forEach((cell) => {
+        const launchYear = parseInt(cell.getLaunchAnnounced());
+        if (!isNaN(launchYear) && launchYear > 1999) {
+          if (yearCounts[launchYear]) {
+            yearCounts[launchYear]++;
+          } else {
+            yearCounts[launchYear] = 1;
+          }
+        }
+      });
+
+      let maxYear = null;
+      let maxCount = 0;
+      for (const year in yearCounts) {
+        if (yearCounts[year] > maxCount) {
+          maxCount = yearCounts[year];
+          maxYear = year;
         }
       }
-    });
 
-    let maxYear = null;
-    let maxCount = 0;
-    for (const year in yearCounts) {
-      if (yearCounts[year] > maxCount) {
-        maxCount = yearCounts[year];
-        maxYear = year;
-      }
+      return maxYear;
+    } catch (error) {
+      console.error("Error in findYearWithMostPhonesLaunched:", error);
+      return null;
     }
-
-    return maxYear;
   }
 }
 
@@ -400,6 +445,12 @@ function loadAndProcessCSV(callback) {
   fs.readFile(filePath, "utf8", (error, csvData) => {
     if (error) {
       console.error("Error reading the CSV file:", error);
+      return;
+    }
+
+    // check if the file is empty
+    if (!csvData.trim()) {
+      console.error("Error: The CSV file is empty.");
       return;
     }
 

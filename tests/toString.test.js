@@ -1,4 +1,4 @@
-const Cell = require('./main');
+import { Cell } from "../main";
 
 describe('Cell Class', () => {
   let cell;
